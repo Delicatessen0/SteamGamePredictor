@@ -1,4 +1,4 @@
-# 🎮 Predicting Steam Game Success: An End-to-End ML Approach
+# Predicting Steam Game Success: An End-to-End ML Approach
 
 As a gamer and data scientist, I’ve always been fascinated by why some indie titles explode overnight while high-budget releases sometimes struggle to find an audience. 
 
@@ -8,7 +8,7 @@ Using live API data, feature engineering, and gradient boosting, this model pred
 
 ---
 
-## 📊 Key Results & Insights
+## Key Results & Insights
 
 | Metric | Performance |
 |--------|-------------|
@@ -27,7 +27,7 @@ XGBoost feature gain importances revealed some fascinating trends about the mode
 
 ---
 
-## 🔍 How the Pipeline Works
+## How the Pipeline Works
 
 The project is structured as a modular pipeline (`main.py` coordinates the steps):
 
@@ -64,7 +64,7 @@ I chose **XGBoost** because of its robust handling of high-dimensional sparse da
 
 ---
 
-## 📈 Charts & Visualizations
+## Charts & Visualizations
 
 The pipeline generates publication-quality plots in the `output/` directory:
 
@@ -72,30 +72,5 @@ The pipeline generates publication-quality plots in the `output/` directory:
 | :---: | :---: | :---: |
 | ![Feature Importance](output/05_feature_importance.png) | ![ROC Curve](output/07_roc_curve.png) | ![Genre Success](output/02_genre_success_rate.png) |
 
-## 🛠️ How to Run It
 
-If you want to run the pipeline yourself, you can get it set up in two quick steps.
-
-### 1. Grab the dependencies
-First, clone the repository and install the required packages (XGBoost, VADER, Scikit-Learn, Matplotlib, etc.):
-
-```bash
-git clone https://github.com/Delicatessen0/SteamGamePredictor.git
-cd SteamGamePredictor
-pip install -r requirements.txt
-```
-
-### 2. Run the pipeline
-To run preprocessing, feature engineering, model training, and plot all the charts using the pre-cached dataset of 349 enriched games (takes under 10 seconds), run:
-
-```bash
-python main.py --skip-collect
-```
-
-If you want to wipe the cache and scrape a fresh set of games from SteamSpy on-the-fly, you can run:
-
-```bash
-# Scrapes 1,000 games (warning: takes a few minutes due to API rate-limit delays)
-python main.py
-```
 
