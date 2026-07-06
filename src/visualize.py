@@ -1,6 +1,6 @@
 """
-visualize.py
-────────────
+# visualize.py
+# ============
 All chart generation for the Steam Game Success Predictor.
 Charts are saved to the output/ directory as high-res PNGs.
 """
@@ -22,7 +22,8 @@ log = logging.getLogger(__name__)
 
 matplotlib.use("Agg")   # Non-interactive backend — works without a display
 
-# ── Global style ─────────────────────────────────────────────────────────────
+# Global style
+
 
 DARK_BG      = "#0d1117"
 PANEL_BG     = "#161b22"
@@ -56,7 +57,8 @@ def _save(fig: plt.Figure, name: str) -> None:
     log.info("Saved chart → %s", path)
 
 
-# ── Individual charts ─────────────────────────────────────────────────────────
+# Individual charts
+
 
 def plot_review_distribution(df: pd.DataFrame) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
@@ -239,7 +241,8 @@ def plot_release_year_trend(df: pd.DataFrame) -> None:
     _save(fig, "08_success_rate_over_time")
 
 
-# ── Master function ───────────────────────────────────────────────────────────
+# Master function
+
 
 def generate_all_charts(
     df: pd.DataFrame,

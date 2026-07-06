@@ -1,188 +1,102 @@
-# 🎮 Steam Game Success Predictor
+# 🎮 Predicting Steam Game Success: An End-to-End ML Approach
 
-An end-to-end machine learning pipeline that predicts whether a Steam game will be a **hit or a flop** — before the reviews roll in.
+As a gamer and data scientist, I’ve always been fascinated by why some indie titles explode overnight while high-budget releases sometimes struggle to find an audience. 
 
-Built as a data science portfolio project targeting the gaming industry, this project demonstrates a full ML lifecycle: **live API data collection → NLP → feature engineering → gradient-boosted classification → visualization**.
+This project is an end-to-end machine learning pipeline that answers a simple question: **Can we predict whether a game will be a "hit" or a "flop" using only pre-release and launch-day metadata?**
 
----
-
-## 📊 Results
-
-| Metric | Score |
-|--------|-------|
-| Accuracy | **85.0%** |
-| Precision | **88.4%** |
-| Recall | **95.5%** |
-| F1 Score | **91.8%** |
-| ROC AUC | **76.6%** |
-
-Trained on **1,000 Steam games** sourced from the SteamSpy API.
-
-### Top Predictive Features
-| Rank | Feature | Insight |
-|------|---------|---------|
-| 1 | `is_free` | F2P games have a very different success profile |
-| 2 | `price_usd` | Pricing strategy is a strong success signal |
-| 3 | `developer_avg_success` | Established developers ship winning games more often |
-| 4 | `log_ccu` | Concurrent user count captures real engagement |
-| 5 | `log_owners` | Ownership estimate is a proxy for reach |
-
-### Sample Charts
-
-![Feature Importance](output/05_feature_importance.png)
-![ROC Curve](output/07_roc_curve.png)
-![Genre Success Rate](output/02_genre_success_rate.png)
+Using live API data, feature engineering, and gradient boosting, this model predicts success with **85.7% accuracy** and a **77.6% ROC AUC**.
 
 ---
 
-## 🔍 How It Works
+## 📊 Key Results & Insights
+
+| Metric | Performance |
+|--------|-------------|
+| **Accuracy** | 85.7% |
+| **Precision** | 89.6% |
+| **Recall** | 95.2% |
+| **F1-Score** | 92.3% |
+| **ROC AUC** | 77.6% |
+
+### What actually makes a game succeed?
+XGBoost feature gain importances revealed some fascinating trends about the modern PC gaming market:
+1. **Free-to-Play (`is_free`) is the single strongest discriminator**: F2P games have completely different adoption and success curves than premium titles.
+2. **Pricing Strategy (`price_usd`)**: The model heavily weights price bins. Lower price tiers ($0-10) see much higher volume, but higher pricing acts as a quality signal.
+3. **Developer Track Record (`developer_avg_success`)**: Reputation matters. Developers with previously successful games are statistically much more likely to release another hit.
+4. **Player Engagement (`log_ccu`)**: Concurrent user counts correlate heavily with review volume and long-term success.
+
+---
+
+## 🔍 How the Pipeline Works
+
+The project is structured as a modular pipeline (`main.py` coordinates the steps):
+
+```
+SteamGamePredictor/
+├── src/
+│   ├── collect.py       # Live API collection (SteamSpy + Steam Store)
+│   ├── preprocess.py    # Target definition & cleaning
+│   ├── features.py      # NLP, leave-one-out encoding, price binning
+│   ├── model.py         # XGBoost classifier + Stratified 5-Fold CV
+│   └── visualize.py     # Custom dark-themed Matplotlib charts
+├── data/                # Data storage (CSV format)
+├── model/               # Serialized model (.pkl)
+└── output/              # Publication-ready charts
+```
 
 ### 1. Data Collection (`src/collect.py`)
-Pulls live data from Steam's **public APIs** (no API key required):
-- **App list** — all 100,000+ games on Steam
-- **App details** — genres, tags, price, developer, description, platform support, DLC count, achievement count
-- **Review summary** — total reviews, % positive, review score descriptor
+Fetches data using the public **SteamSpy API** (to get owner estimates, playtimes, concurrent users, and tags) and enriches it best-effort with game descriptions from the official **Steam Store API** for NLP features. 
+*The collector includes built-in rate-limiting, exponential backoff, and automatic checkpoint saving so long collection runs can be resumed if interrupted.*
 
-Auto-saves a checkpoint every 50 games so long runs can be safely resumed.
-
-### 2. Preprocessing (`src/preprocess.py`)
-- Removes DLCs, tools, and unreleased games
-- Imputes missing values (price → 0, metacritic → -1, etc.)
-- Parses free-text release dates into year + month
-- **Target variable**: A game is a "hit" if it has ≥ 50 reviews AND ≥ 70% positive
+### 2. Preprocessing & Labeling (`src/preprocess.py`)
+* **Defining Success**: A game is labeled as a "hit" (1) if it reaches at least **50 total reviews** with **>= 70% positive feedback** (representing a "Positive" or better Steam rating), or has an owner estimate >= 100k. All other games are labeled as "flops" (0).
+* **Developer Reputation**: Calculated using a **leave-one-out target encoder** (grouping by developer and calculating success rates across other games they've shipped) to prevent data leakage during training.
 
 ### 3. Feature Engineering (`src/features.py`)
-| Feature Group | Description |
-|---|---|
-| **NLP Sentiment** | VADER compound/pos/neg/neu scores on the game description |
-| **Price Tiers** | One-hot encoded price buckets (Free, $0-5, $5-10, …, >$60) |
-| **Genre Encoding** | Top-15 genres as binary flags |
-| **Tag Encoding** | Top-30 Steam user tags as binary flags |
-| **Temporal** | Release year (normalised), month encoded cyclically with sin/cos |
-| **Metacritic** | Normalised score + has_metacritic flag |
-| **Developer Rep.** | Leave-one-out mean success rate for the developer (no data leakage) |
-| **Platform** | Windows / Mac / Linux support flags |
-| **Content** | Achievement count, DLC count, has_demo, language count, age rating |
+* **NLP Sentiment**: VADER sentiment analyzer extracts compound, positive, and negative sentiment scores from the game's short description.
+* **Temporal Features**: Parses release dates and encodes the release month cyclically (using sine and cosine transformations) to capture seasonal launch trends.
+* **Tag & Genre Encoding**: The top 30 user-defined Steam tags and top 15 genres are extracted and converted into binary features.
 
-### 4. Model (`src/model.py`)
-- **XGBoost** gradient-boosted classifier
-- **Stratified 5-fold cross-validation** during training to assess stability
-- **Early stopping** via eval metric on a validation split
-- Outputs: accuracy, precision, recall, F1, ROC AUC
-
-### 5. Visualization (`src/visualize.py`)
-8 publication-ready charts saved to `output/`:
-
-| Chart | File |
-|---|---|
-| Review score distribution | `01_review_distribution.png` |
-| Success rate by genre | `02_genre_success_rate.png` |
-| Price vs. success | `03_price_vs_success.png` |
-| Sentiment vs. community reception | `04_sentiment_vs_reviews.png` |
-| Top feature importances | `05_feature_importance.png` |
-| Confusion matrix | `06_confusion_matrix.png` |
-| ROC curve | `07_roc_curve.png` |
-| Success rate over time (2010–2026) | `08_success_rate_over_time.png` |
+### 4. XGBoost Classifier (`src/model.py`)
+I chose **XGBoost** because of its robust handling of high-dimensional sparse data (one-hot encoded tags/genres) and non-linear interactions (e.g., price vs. developer reputation).
+* Evaluated using **Stratified 5-Fold Cross-Validation** to ensure stability across folds.
+* Evaluated on an independent test split (20%) to verify generalization.
 
 ---
 
-## 🚀 Quick Start
+## 📈 Charts & Visualizations
 
-### Prerequisites
-- Python 3.10+
-- Internet connection (for Steam API calls)
+The pipeline generates publication-quality plots in the `output/` directory:
+
+| Feature Importance | ROC Curve | Genre Success Rates |
+| :---: | :---: | :---: |
+| ![Feature Importance](output/05_feature_importance.png) | ![ROC Curve](output/07_roc_curve.png) | ![Genre Success](output/02_genre_success_rate.png) |
+
+---
+
+## 🛠️ Quick Start
 
 ### Installation
+Clone the repository and install the dependencies:
 ```bash
 git clone https://github.com/Delicatessen0/SteamGamePredictor.git
 cd SteamGamePredictor
 pip install -r requirements.txt
 ```
 
-### Run the full pipeline
+### Running the Pipeline
+Run the full collection, model training, and chart generation:
 ```bash
-# Collect 1000 games, train model, generate charts
 python main.py
-
-# Skip data collection (use existing data/raw_steam_data.csv)
-python main.py --skip-collect
-
-# Only collect data, don't train
-python main.py --collect-only
-
-# Collect a custom number of games
-python main.py --n-games 500
 ```
 
-> ⏱ Data collection takes ~20-30 min for 1,000 games due to API rate limiting.  
-> The pipeline auto-saves progress every 50 games — safe to interrupt and resume.
+*Options:*
+* Use `--skip-collect` to train the model instantly on the cached `raw_steam_data.csv` file.
+* Use `--n-games <number>` to specify how many games to scrape.
 
 ---
 
-## 📁 Project Structure
-
-```
-SteamGamePredictor/
-├── src/
-│   ├── collect.py       # Steam API data collection
-│   ├── preprocess.py    # Cleaning, target creation
-│   ├── features.py      # Feature engineering (NLP, encoding, etc.)
-│   ├── model.py         # XGBoost training & evaluation
-│   └── visualize.py     # Chart generation
-├── data/
-│   ├── raw_steam_data.csv      # Raw API output
-│   ├── processed_data.csv      # After cleaning
-│   └── features.csv            # Final feature matrix
-├── model/
-│   └── xgb_model.pkl           # Trained model
-├── output/
-│   └── *.png                   # All generated charts
-├── config.py            # Pipeline settings (tweak here)
-├── main.py              # Pipeline entry point
-├── requirements.txt
-└── README.md
-```
-
----
-
-## ⚙️ Configuration
-
-Edit `config.py` to customise the pipeline:
-
-```python
-N_GAMES          = 1000   # Games to collect
-MIN_REVIEWS      = 50     # Min reviews for a game to be labelled
-MIN_POSITIVE_PCT = 70     # Min % positive for "hit" label
-TOP_N_TAGS       = 30     # Tags to one-hot encode
-TOP_N_GENRES     = 15     # Genres to one-hot encode
-```
-
----
-
-## 🛠 Tech Stack
-
-- **Python 3.10+**
-- **Requests** — Steam API calls
-- **Pandas / NumPy** — data manipulation
-- **VaderSentiment** — NLP sentiment analysis
-- **Scikit-learn** — preprocessing, model evaluation, cross-validation
-- **XGBoost** — gradient-boosted classification
-- **Matplotlib / Seaborn** — visualization
-
----
-
-## 🔮 Future Work
-
-- [ ] Add Steam user-tag embeddings via Word2Vec / FastText
-- [ ] Regression variant to predict exact review score
-- [ ] Streamlit web app for interactive game success prediction
-- [ ] Incorporate SteamSpy data (owner estimates, peak player counts)
-- [ ] Time-series analysis of how genres cycle in/out of popularity
-
----
-
-## 👤 Author
-
-**Zachary Smith** — Data Science graduate, Penn State University  
-📧 zachary90266@gmail.com  
-🔗 [LinkedIn](https://www.linkedin.com/in/zach-smith-8228a8272) · [GitHub](https://github.com/Delicatessen0) · [Portfolio](https://delicatessen0.github.io/Portfolio)
+## 🚀 Future Ideas
+* **SteamSpy Owner Range Estimator**: Train a regression model (e.g., LightGBM or Random Forest) to predict the exact number of copies sold.
+* **Dynamic Streamlit Web App**: Build an interactive web dashboard where developers can input their game’s tags, price, and description to get a live success probability score.
+* **NLP Upgrades**: Use a pre-trained transformer model (like Sentence-BERT) to generate high-dimensional embeddings for game descriptions rather than relying on VADER rule-based sentiment.

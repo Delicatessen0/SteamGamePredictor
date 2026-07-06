@@ -1,6 +1,6 @@
 """
-collect.py
-──────────
+# collect.py
+# ==========
 Steam data collection using SteamSpy API (no key required).
 
 SteamSpy (steamspy.com/api.php) is a third-party analytics service that
@@ -39,7 +39,8 @@ HEADERS = {
 }
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# Helpers
+
 
 def _get(url: str, params: dict = None) -> dict | None:
     """GET with retry logic and exponential back-off."""
@@ -69,7 +70,8 @@ def _parse_owners(owner_str: str) -> int:
         return 0
 
 
-# ── SteamSpy API ──────────────────────────────────────────────────────────────
+# SteamSpy API
+
 
 def get_steamspy_page(page: int = 0) -> dict:
     """Fetch one page (1000 games) from SteamSpy."""
@@ -97,7 +99,16 @@ def get_all_steamspy_games(max_pages: int = 5) -> list[dict]:
     return all_games
 
 
-# ── Steam Store enrichment (description for NLP) ──────────────────────────────
+# SteamSpy Details
+
+
+def get_steamspy_details(app_id: int) -> dict | None:
+    """Fetch full details for a single app from SteamSpy."""
+    return _get("https://steamspy.com/api.php", params={"request": "appdetails", "appid": app_id})
+
+
+# Steam Store enrichment (description for NLP)
+
 
 def get_steam_description(app_id: int) -> str:
     """
@@ -118,7 +129,8 @@ def get_steam_description(app_id: int) -> str:
     return ""
 
 
-# ── Record builder ────────────────────────────────────────────────────────────
+# Record builder
+
 
 def _parse_steamspy_record(game: dict, description: str = "") -> dict:
     """
@@ -174,7 +186,8 @@ def _parse_steamspy_record(game: dict, description: str = "") -> dict:
     }
 
 
-# ── Main collector ────────────────────────────────────────────────────────────
+# Main collector
+
 
 def collect_dataset(n: int = N_GAMES, resume: bool = True, enrich_descriptions: bool = True) -> pd.DataFrame:
     """
@@ -219,13 +232,23 @@ def collect_dataset(n: int = N_GAMES, resume: bool = True, enrich_descriptions: 
         if not app_id:
             continue
 
+        # Fetch full details from SteamSpy (contains genres, tags, languages)
+        details = get_steamspy_details(app_id)
+        if not details or "name" not in details:
+            details = game
+        else:
+            if "appid" not in details:
+                details["appid"] = app_id
+
         # Optional: fetch description from Steam Store for NLP
         description = ""
         if enrich_descriptions:
             description = get_steam_description(app_id)
             time.sleep(REQUEST_DELAY)
+        else:
+            time.sleep(0.35)  # Safe delay for SteamSpy rate limit
 
-        record = _parse_steamspy_record(game, description)
+        record = _parse_steamspy_record(details, description)
         rows.append(record)
         collected_ids.add(app_id)
 

@@ -1,6 +1,6 @@
 """
-features.py
-───────────
+# features.py
+# ===========
 Feature engineering pipeline:
   1. NLP sentiment on game descriptions (VADER)
   2. Price tier encoding
@@ -22,7 +22,8 @@ from config import (
 log = logging.getLogger(__name__)
 
 
-# ── NLP ───────────────────────────────────────────────────────────────────────
+# NLP Sentiment Analysis
+
 
 def add_sentiment_features(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -53,7 +54,8 @@ def add_sentiment_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ── Price ─────────────────────────────────────────────────────────────────────
+# Price Encoding
+
 
 def add_price_features(df: pd.DataFrame) -> pd.DataFrame:
     """Bin continuous price into categorical tiers."""
@@ -67,7 +69,8 @@ def add_price_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ── Genres & Tags ─────────────────────────────────────────────────────────────
+# Genres & Tags Encoding
+
 
 def _one_hot_pipe_column(df: pd.DataFrame, col: str, top_n: int, prefix: str) -> pd.DataFrame:
     """One-hot encode a pipe-separated string column, keeping only the top_n values."""
@@ -89,7 +92,8 @@ def add_tag_features(df: pd.DataFrame) -> pd.DataFrame:
     return _one_hot_pipe_column(df.copy(), "user_tags", TOP_N_TAGS, "tag")
 
 
-# ── Temporal ──────────────────────────────────────────────────────────────────
+# Temporal Features
+
 
 def add_temporal_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
@@ -100,7 +104,8 @@ def add_temporal_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ── Metacritic ────────────────────────────────────────────────────────────────
+# Metacritic Score
+
 
 def add_metacritic_features(df: pd.DataFrame) -> pd.DataFrame:
     """Add metacritic features. Gracefully handles missing column."""
@@ -111,7 +116,8 @@ def add_metacritic_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ── Language count ────────────────────────────────────────────────────────────
+# Language Support
+
 
 def add_language_count(df: pd.DataFrame) -> pd.DataFrame:
     """Count supported languages. Works with 'supported_languages' or 'languages' column."""
@@ -140,7 +146,8 @@ def add_steamspy_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ── Final feature matrix ──────────────────────────────────────────────────────
+# Final Feature Matrix Creation
+
 
 # Columns that are IDs / raw strings / targets — never used as model features
 DROP_COLS = [

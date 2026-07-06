@@ -1,6 +1,6 @@
 """
-model.py
-────────
+# model.py
+# ========
 XGBoost classification model: training, evaluation, and persistence.
 """
 
@@ -89,10 +89,10 @@ def evaluate_model(
         "roc_auc":   roc_auc_score(y_test, y_prob),
     }
 
-    log.info("── Test Set Metrics ─────────────────────────")
+    log.info("=== Test Set Metrics ===")
     for k, v in metrics.items():
         log.info("  %-12s %.4f", k.upper(), v)
-    log.info("─────────────────────────────────────────────")
+    log.info("========================")
     log.info("\n%s", classification_report(y_test, y_pred, target_names=["Flop", "Hit"]))
 
     return metrics

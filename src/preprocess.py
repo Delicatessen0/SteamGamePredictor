@@ -1,6 +1,6 @@
 """
-preprocess.py
-─────────────
+# preprocess.py
+# =============
 Clean and standardise the raw Steam dataset before feature engineering.
 """
 
@@ -16,7 +16,8 @@ from config import (
 log = logging.getLogger(__name__)
 
 
-# ── Cleaning ──────────────────────────────────────────────────────────────────
+# Cleaning
+
 
 def parse_release_date(df: pd.DataFrame) -> pd.DataFrame:
     """Convert free-text release_date to datetime; extract year/month.
@@ -60,7 +61,8 @@ def fill_missing(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ── Target label ──────────────────────────────────────────────────────────────
+# Target label
+
 
 def create_target(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -86,7 +88,8 @@ def create_target(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ── Developer reputation ──────────────────────────────────────────────────────
+# Developer reputation
+
 
 def add_developer_reputation(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -102,7 +105,8 @@ def add_developer_reputation(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ── Pipeline entry point ──────────────────────────────────────────────────────
+# Pipeline entry point
+
 
 def preprocess(raw_path: str = RAW_DATA_PATH, out_path: str = PROCESSED_PATH) -> pd.DataFrame:
     """Run the full cleaning pipeline and return a processed DataFrame."""
