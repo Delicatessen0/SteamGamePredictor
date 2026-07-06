@@ -72,31 +72,30 @@ The pipeline generates publication-quality plots in the `output/` directory:
 | :---: | :---: | :---: |
 | ![Feature Importance](output/05_feature_importance.png) | ![ROC Curve](output/07_roc_curve.png) | ![Genre Success](output/02_genre_success_rate.png) |
 
----
+## 🛠️ How to Run It
 
-## 🛠️ Quick Start
+If you want to run the pipeline yourself, you can get it set up in two quick steps.
 
-### Installation
-Clone the repository and install the dependencies:
+### 1. Grab the dependencies
+First, clone the repository and install the required packages (XGBoost, VADER, Scikit-Learn, Matplotlib, etc.):
+
 ```bash
 git clone https://github.com/Delicatessen0/SteamGamePredictor.git
 cd SteamGamePredictor
 pip install -r requirements.txt
 ```
 
-### Running the Pipeline
-Run the full collection, model training, and chart generation:
+### 2. Run the pipeline
+To run preprocessing, feature engineering, model training, and plot all the charts using the pre-cached dataset of 349 enriched games (takes under 10 seconds), run:
+
 ```bash
+python main.py --skip-collect
+```
+
+If you want to wipe the cache and scrape a fresh set of games from SteamSpy on-the-fly, you can run:
+
+```bash
+# Scrapes 1,000 games (warning: takes a few minutes due to API rate-limit delays)
 python main.py
 ```
 
-*Options:*
-* Use `--skip-collect` to train the model instantly on the cached `raw_steam_data.csv` file.
-* Use `--n-games <number>` to specify how many games to scrape.
-
----
-
-## 🚀 Future Ideas
-* **SteamSpy Owner Range Estimator**: Train a regression model (e.g., LightGBM or Random Forest) to predict the exact number of copies sold.
-* **Dynamic Streamlit Web App**: Build an interactive web dashboard where developers can input their game’s tags, price, and description to get a live success probability score.
-* **NLP Upgrades**: Use a pre-trained transformer model (like Sentence-BERT) to generate high-dimensional embeddings for game descriptions rather than relying on VADER rule-based sentiment.
